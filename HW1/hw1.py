@@ -13,13 +13,13 @@ class Document():
 	file_name = ""
 	corpus = ""
 
-	def __init__(self, file_name):
+	def __init__( self, file_name ):
 	
 		if file_name:
 			self.file_name = file_name
 			self.corpus = self.from_file()
 
-	def from_file(self):
+	def from_file( self ):
 		assert self.file_name, "File Input not provided"
 		
 		content = ""
@@ -28,30 +28,40 @@ class Document():
 
 		return content
 
-	def paragraphs(self):
-		# paragraphs = self.corpus.split(r'\n\w+\n|\n\n+')
-		# bag = self.corpus.split('\n\n')
-		bag = re.split(r"\n\s*\n", self.corpus)
-		
+	def sub_generator( self, bag ):
 		iterator = iter(bag)
 		val = iterator.next()
 		
 		while val:
 			yield val
 			val = iterator.next()
+
+	def paragraphs( self ):
+		bag = re.split(r"\n\s*\n", self.corpus)
+		return self.sub_generator(bag)
+		
+
+	def sentences( self ):
+
+		bag = re.split(r"[.?!]\s+", self.corpus)
+		return self.sub_generator(bag)
+		
 		
 
 
 
 def main():
 	document = Document(INPUT_FILE)
-	print document.corpus
-	# print corpus.split("\n")
 
-	count = 0
+	paragrpah_count = 0
 	for p in document.paragraphs():
-		count += 1
-	print count
+		paragrpah_count += 1
+	print "Paragraph Count: %d" % paragrpah_count
+
+	sentence_count = 0
+	for s in document.sentences():
+		sentence_count += 1
+	print "Sentences Count: %d" % sentence_count
 	
 
 
