@@ -2,10 +2,8 @@
 
 import re
 
-
-
-
-INPUT_FILE = '10fitness.txt'
+# INPUT_FILE = '10fitness.txt'
+INPUT_FILE = 'test.txt'
 
 
 
@@ -37,19 +35,18 @@ class Document():
 			val = iterator.next()
 
 	def paragraphs( self ):
-		bag = re.split(r"\n\s*\n", self.corpus)
+		bag = re.findall(r"\n\s*\n", self.corpus)
 		return self.sub_generator(bag)
 		
-
 	def sentences( self ):
-
-		bag = re.split(r"[.?!]\s+", self.corpus)
+		bag = re.findall(r"\s*[.?!]\s+[A-Z]", self.corpus)
 		return self.sub_generator(bag)
+
+	def words( self ):
+		bag = re.findall(r"\w+", self.corpus)
+		return self.sub_generator(bag)
+
 		
-		
-
-
-
 def main():
 	document = Document(INPUT_FILE)
 
@@ -62,9 +59,12 @@ def main():
 	for s in document.sentences():
 		sentence_count += 1
 	print "Sentences Count: %d" % sentence_count
+
+	word_count = 0
+	for w in document.words():
+		word_count += 1
+	print "Words Count: %d" % word_count
 	
-
-
 
 
 main()
