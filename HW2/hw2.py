@@ -13,9 +13,6 @@ END_OF_LINE = 'EOL'
 def from_file( file_name ):
 	assert file_name, "File Input not provided"
 
-	tag_trans = {}
-	word_likelihoods = {}
-
 
 	prev_tup = (None, None)
 
