@@ -1,30 +1,13 @@
 #!/usr/bin/python
 
 import re
+from counter import Counter
 
 # INPUT_FILE = '10fitness.txt'
 INPUT_FILE = 'test.txt'
 
 BEGIN_OF_LINE = 'BOL'
 END_OF_LINE = 'EOL'
-
-
-class Counter:
-
-	def __init__(self):
-		self.store = {}
-
-	def put(self, key):
-		if (key in self.store):
-			self.store[key] +=1 
-		else:
-			self.store[key] = 1
-
-	def count(self, key):
-		if (key in self.store):
-			return self.store[key]
-		else:
-			return 0
 
 
 def from_file( file_name ):
@@ -59,9 +42,6 @@ def from_file( file_name ):
 
 		
 def main():
-	# from_file(INPUT_FILE)
-	
-	
-
+	from_file(INPUT_FILE)
 
 main()
