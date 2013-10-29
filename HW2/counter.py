@@ -15,9 +15,10 @@ class Counter:
 		else:
 			return 0
 
-	def store(self):
-		return self.store
 
+	def keys(self):
+		return self.store.keys()
+		
 	def __repr__(self):
 		output = []
 		for key in self.store.keys():
