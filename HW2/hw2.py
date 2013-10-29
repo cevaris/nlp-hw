@@ -14,11 +14,9 @@ tag_dict = {}   # Map of observed tags for given word
 sing_tt = {}    # Map of singletons, sing(.|ti-1)
 sing_tw = {}    # Map of singletons, sing(.|ti)
 
+num_of_states = 0
+
 def viterbi(train, test):
-    """
-    Determines best tag sequence given observations using
-    the Viterbi algorithm. Scores sequence against gold.
-    """
 
     count(train)                # Train model parameters
     (obs, gold) = unpack(test)  # Read in test file and tags
@@ -185,12 +183,7 @@ stores them in the maps counts_*, tag_dict, and sing_*
         elif (counts_tt[tt] == 2):
             sing_tt[tags[i-1]] -= 1
 
-        # Display progress
-        # progress += 1
-        # if progress % 5000 == 1:
-        #     sys.stderr.write('.')
-
-    counts_uni['_V_'] = len(tag_dict.keys()) # number of types
+    num_of_states = len(tag_dict.keys()) # number of types
     
     # Fix unigram counts for "###"
     counts_uni['###'] = counts_uni['###'] / 2
@@ -212,7 +205,7 @@ def prob(i, j, switch):
     elif switch == 'b':
         tw = makekey(i, j)
 
-        backoff = float(counts_uni.get(j, 0) + 1)/(counts_uni['_N_']+counts_uni['_V_'])
+        backoff = float(counts_uni.get(j, 0) + 1)/(counts_uni['_N_']+num_of_states)
         lambdap = sing_tw[i] + 1e-100
         return math.log(float(counts_tw.get(tw, 0)+lambdap*backoff)/(counts_uni[i] + lambdap))
 
