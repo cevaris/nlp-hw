@@ -9,6 +9,7 @@ INPUT_FILE = 'test.txt'
 BEGIN_OF_LINE = '<s>'
 END_OF_LINE = '<e>'
 
+
 def calc_trans_prob(tag_bigrams,tag_counts):
 
 	tag_trans_probs = {}
@@ -66,8 +67,8 @@ def from_file( file_name ):
 			
 			if (items == [] or items == delim):
 				prev_tup = (None, None)
-			else:
 
+			else:
 				token, tag = tuple(items)
 				prev_token, prev_tag = prev_tup
 
@@ -83,17 +84,6 @@ def from_file( file_name ):
 					token_counts.put("%s" % BEGIN_OF_LINE)
 					# print "%s|%s" % (BEGIN_OF_LINE, tag)
 
-				# elif (items == delim):
-				# 	continue
-					
-					# print END_OF_LINE
-					# tag_bigrams.put("%s|%s" % (prev_tag, END_OF_LINE))
-					# tag_counts.put(END_OF_LINE)
-
-					# token_tags.put("%s|%s" % (END_OF_LINE, prev_tag))
-					# token_counts.put("%s" % END_OF_LINE)
-					# print "%s|%s" % (prev_tag, END_OF_LINE)		
-
 				else:
 					# print "%s|%s, %s|%s" % (prev_token, prev_tag, token, tag)
 					tag_bigrams.put("%s|%s" % (prev_tag, tag))
@@ -106,15 +96,15 @@ def from_file( file_name ):
 
 	return tag_bigrams, tag_counts, token_tags, token_counts
 
-	
 
-		
+"""
+If token occurs under X times, replace with UNK for uknowns
+"""
 def main():
 	
 	tag_bigrams, tag_counts, token_tags, token_counts = from_file(INPUT_FILE)
 	tag_trans_probs = calc_trans_prob(tag_bigrams,tag_counts)
 	token_tag_probs = calc_token_prob(token_tags, tag_counts)
-
 
 
 main()
