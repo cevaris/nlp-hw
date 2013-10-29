@@ -59,11 +59,7 @@ def viterbi(train, test):
                     v[vj] = u
                     back[makekey(str(j),tj)] = ti   # and store backpointer to ti that gave that u
 
-            # Display progress
-            # progress += 1
-            # if progress % 5000 == 1:
-            #     sys.stderr.write('.')
-
+    result  = ["<s>"]
     predict = ['###']
     prev = predict[0]
     known, novel, ktotal, ntotal = 0, 0, 1e-100, 1e-100
@@ -84,6 +80,7 @@ def viterbi(train, test):
                     novel += 1
 
         tag = back[makekey(str(i), prev)]
+        result.append("%s %s" % (obs[i],tag))
         predict.insert(0, tag)
         prev = tag
 
@@ -92,8 +89,10 @@ def viterbi(train, test):
     npct = float(novel) / ntotal * 100
     path_prob = v[makekey(str(len(obs)-1), predict[-1])]
     ppw = math.exp(float(-1*path_prob)/(len(obs)-1))
-    
-    return tpct, kpct, npct, ppw
+
+    print "Tagging accuracy: %.4g%% (known: %.4g%% novel: %.4g%%) \nPerplexity per tagged test word: %.3f" % (tpct, kpct, npct, ppw)
+
+    return result
 
 def unpack(filename): # Returns a list of words and parallel list of tags
 
@@ -187,8 +186,6 @@ stores them in the maps counts_*, tag_dict, and sing_*
     
     # Fix unigram counts for "###"
     counts_uni['###'] = counts_uni['###'] / 2
-    
-    sys.stderr.write("\nFinished training from '%s' on %d tokens\n" % (filename, len(words)))
 
 def prob(i, j, switch):
 
@@ -216,26 +213,10 @@ def makekey(*words):
     return '/'.join(words)
 
 def main():
-    argv = sys.argv[1:]
-
-    if len(argv) < 2:
-        print """
-    HMM part-of-speech tagger.
-    Determines best (Viterbi) sequence for a given string.
-
-    Usage: %s trainpath testpath
-    """ % sys.argv[0]
-        sys.exit(1)
-
-    train = argv.pop(0)
-    test = argv.pop(0)
-
-    (tpct, kpct, npct, ppw) = viterbi(train, test)
-    
-    print """
-Tagging accuracy: %.4g%% (known: %.4g%% novel: %.4g%%)
-Perplexity per tagged test word: %.3f
-    """ % (tpct, kpct, npct, ppw)
+	train = 'train.txt'
+	test  = 'test.txt'
+ 	# print viterbi(train,test)
+ 	viterbi(train,test)
     
 if __name__ == "__main__":
     main()
