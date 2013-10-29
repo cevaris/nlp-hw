@@ -207,7 +207,8 @@ def prob(i, j, switch):
         return math.log(float(counts_tw.get(tw, 0)+lambdap*backoff)/(counts_uni[i] + lambdap))
 
     # return prob of 0 if function isnt called properly
-    else: return float('-inf')
+    else:
+		raise Error('Case Not Found')
     
 def makekey(*words):
     return '/'.join(words)
