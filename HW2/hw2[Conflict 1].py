@@ -76,8 +76,9 @@ def from_file( file_name ):
 					prev_tup = (token, tag)
 					tag_bigrams.put("%s|%s" % (BEGIN_OF_LINE, tag))
 					tag_counts.put(tag)
+					
 					token_tags.put("%s|%s" % (BEGIN_OF_LINE, token))
-					token_counts.put("%s" % (BEGIN_OF_LINE, token))
+					token_counts.put("%s" % token)
 					# print "%s|%s" % (BEGIN_OF_LINE, tag)
 
 				elif (items == delim):
@@ -85,14 +86,23 @@ def from_file( file_name ):
 					# print END_OF_LINE
 					tag_bigrams.put("%s|%s" % (prev_tag, END_OF_LINE))
 					tag_counts.put(END_OF_LINE)
+
+					token_tags.put("%s|%s" % (token,END_OF_LINE))
+					token_counts.put("%s" % END_OF_LINE)
 					# print "%s|%s" % (prev_tag, END_OF_LINE)		
 
 				else:
 					# print "%s|%s, %s|%s" % (prev_token, prev_tag, token, tag)
 					tag_bigrams.put("%s|%s" % (prev_tag, tag))
 					tag_counts.put(tag)
+
+					token_tags.put("%s|%s" % (token,tag))
+					token_counts.put("%s" % token)
+
 					prev_tup = (token, tag)
 
+
+	print token_counts
 	return tag_bigrams, tag_counts
 
 	

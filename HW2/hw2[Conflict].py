@@ -50,8 +50,8 @@ def from_file( file_name ):
 	tag_bigrams = Counter()
 	tag_counts  = Counter()
 
-	token_tags   = Counter()
-	token_counts = Counter()
+	word_tags   = Counter()
+	word_counts = Counter()
 
 	prev_tup = (None, None)
 
@@ -62,7 +62,7 @@ def from_file( file_name ):
 
 			items = line.split()
 			
-			if (items == []):
+			if (items == []): # Between test case
 				prev_tup = (None, None)
 			else:
 
@@ -71,20 +71,19 @@ def from_file( file_name ):
 
 
 				if (prev_tup == (None,None)):
-					
 					# print BEGIN_OF_LINE
 					prev_tup = (token, tag)
 					tag_bigrams.put("%s|%s" % (BEGIN_OF_LINE, tag))
 					tag_counts.put(tag)
-					token_tags.put("%s|%s" % (BEGIN_OF_LINE, token))
-					token_counts.put("%s" % (BEGIN_OF_LINE, token))
+					word_tags.put("%s|%s" % (BEGIN_OF_LINE, token))
+
 					# print "%s|%s" % (BEGIN_OF_LINE, tag)
 
 				elif (items == delim):
-					
 					# print END_OF_LINE
 					tag_bigrams.put("%s|%s" % (prev_tag, END_OF_LINE))
 					tag_counts.put(END_OF_LINE)
+					# tag_counts.put(prev_tag)
 					# print "%s|%s" % (prev_tag, END_OF_LINE)		
 
 				else:
