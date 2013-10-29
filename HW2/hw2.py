@@ -3,10 +3,9 @@
 import sys
 import math
 
-# icvtag.py
-#
-# Author: Christopher Hogan
-# 12 April 2010
+
+# Reference, Christopher Hogan
+# https://github.com/chrismikehogan/Viterbi-Tagger
 
 counts_uni = {} # Map of unigram counts
 counts_tt = {}  # Map of tt bigram counts
