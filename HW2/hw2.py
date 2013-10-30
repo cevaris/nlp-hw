@@ -17,8 +17,6 @@ tag_dict   = {} # Map of observed tags for given word
 sing_tt    = {} # Map of singletons, sing(.|ti-1)
 sing_tw    = {} # Map of singletons, sing(.|ti)
 
-num_of_states = 0
-
 def viterbi(test):
 
     (obs, gold) = load(test)  # Read in test file and tags
@@ -159,23 +157,7 @@ def train_models(filename):
         tt = makekey(tags[i-1], tags[i])
         counts_tt[tt] = counts_tt.get(tt, 0) + 1
 
-        # Adjust singleton count
-        if (counts_tt[tt] == 1):
-            sing_tt[tags[i-1]] = sing_tt.get(tags[i-1], 0) + 1
-        elif (counts_tt[tt] == 2):
-            sing_tt[tags[i-1]] -= 1
-
-        # Adjust singleton count
-        if (counts_tw[tw] == 1):
-            sing_tw[tags[i]] = sing_tw.get(tags[i], 0) + 1
-        elif (counts_tw[tw] == 2):
-            sing_tw[tags[i]] -= 1
-
-
-    # print counts_tw
-    # print sing_tw
-
-    num_of_states = len(tag_dict.keys()) # number of types
+    counts_uni['_V_'] = len(tag_dict.keys()) # number of types
 
 def prob(i, j, switch):
 
@@ -184,16 +166,14 @@ def prob(i, j, switch):
         tt = makekey(i, j)
 
         backoff = float(counts_uni[j])/counts_uni['_N_']
-        lambdap = sing_tt[i] + EPSILON
-        return math.log(float(counts_tt.get(tt, 0) + lambdap*backoff)/(counts_uni[i] + lambdap))
+        return float(counts_tt.get(tt, 0) *backoff)/(counts_uni[i])
 
     # and if computing emmission
     elif switch == 'b':
         tw = makekey(i, j)
 
-        backoff = float(counts_uni.get(j, 0) + 1)/(counts_uni['_N_']+num_of_states)
-        lambdap = sing_tw[i] + EPSILON
-        return math.log(float(counts_tw.get(tw, 0)+lambdap*backoff)/(counts_uni[i] + lambdap))
+        backoff = float(counts_uni.get(j, 0) + 1)/(counts_uni['_N_']+counts_uni['_V_'])
+        return float(counts_tw.get(tw, 0)+backoff)/(counts_uni[i])
 
     else:
 		raise Error('Case Not Found')
@@ -203,7 +183,7 @@ def makekey(*words):
 
 
 def main():
-	
+
 	train = 'train.txt'
 	test  = 'test.txt'
 	
@@ -212,118 +192,3 @@ def main():
     
 if __name__ == "__main__":
     main()
-
-
-
-
-
-
-
-# import re
-# from counter import Counter
-
-# # INPUT_FILE = '10fitness.txt'
-# INPUT_FILE = 'test.txt'
-
-# BEGIN_OF_LINE = '<s>'
-# END_OF_LINE = '<e>'
-
-
-# def calc_trans_prob(tag_bigrams,tag_counts):
-
-# 	tag_trans_probs = {}
-
-# 	for tag_bigram in tag_bigrams.keys():
-# 		prev_tag, curr_tag = tuple(tag_bigram.split("|"))
-# 		bigram_count = tag_bigrams.count(tag_bigram)
-# 		occur_count  = tag_counts.count(curr_tag)
-
-# 		tag_trans_probs[tag_bigram] = float(bigram_count)/float(occur_count)
-
-# 		# print "%s %s %d %d" % (prev_tag, curr_tag, bigram_count, occur_count)
-# 		# print tag_trans_probs.get(curr_tag)
-		
-# 	return tag_trans_probs
-
-
-# def calc_token_prob(token_tags,tag_counts):
-
-# 	token_probs = {}
-
-# 	for token_tag in token_tags.keys():
-# 		token, tag = tuple(token_tag.split("|"))
-		
-# 		token_tag_count = token_tags.count(token_tag)
-# 		occur_count  = tag_counts.count(tag)
-
-# 		print "%s %s %d %d" % (token, tag, token_tag_count, occur_count)
-# 		token_probs[token_tag] = float(token_tag_count)/float(occur_count)
-
-		
-# 		# print token_probs.get(token)
-		
-# 	return token_probs
-
-
-
-# def from_file( file_name ):
-# 	assert file_name, "File Input not provided"
-
-# 	tag_bigrams = Counter()
-# 	tag_counts  = Counter()
-
-# 	token_tags   = Counter()
-# 	token_counts = Counter()
-
-# 	prev_tup = (None, None)
-
-# 	delim = ['.','.']
-	
-# 	with open(file_name) as f:
-# 		for line in f:
-
-# 			items = line.split()
-			
-# 			if (items == [] or items == delim):
-# 				prev_tup = (None, None)
-
-# 			else:
-# 				token, tag = tuple(items)
-# 				prev_token, prev_tag = prev_tup
-
-
-# 				if (prev_tup == (None,None)):
-					
-# 					# print BEGIN_OF_LINE
-# 					prev_tup = (token, tag)
-# 					tag_bigrams.put("%s|%s" % (BEGIN_OF_LINE, tag))
-# 					tag_counts.put(tag)
-					
-# 					token_tags.put("%s|%s" % (BEGIN_OF_LINE, tag))
-# 					token_counts.put("%s" % BEGIN_OF_LINE)
-# 					# print "%s|%s" % (BEGIN_OF_LINE, tag)
-
-# 				else:
-# 					# print "%s|%s, %s|%s" % (prev_token, prev_tag, token, tag)
-# 					tag_bigrams.put("%s|%s" % (prev_tag, tag))
-# 					tag_counts.put(tag)
-
-# 					token_tags.put("%s|%s" % (token,tag))
-# 					token_counts.put("%s" % token)
-
-# 					prev_tup = (token, tag)
-
-# 	return tag_bigrams, tag_counts, token_tags, token_counts
-
-
-# """
-# If token occurs under X times, replace with UNK for uknowns
-# """
-# def main():
-	
-# 	tag_bigrams, tag_counts, token_tags, token_counts = from_file(INPUT_FILE)
-# 	tag_trans_probs = calc_trans_prob(tag_bigrams,tag_counts)
-# 	token_tag_probs = calc_token_prob(token_tags, tag_counts)
-
-
-# main()
