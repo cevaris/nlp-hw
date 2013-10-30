@@ -7,8 +7,6 @@ import math
 # Reference, Christopher Hogan
 # https://github.com/chrismikehogan/Viterbi-Tagger
 
-START = '<s>'
-
 counts_uni = {} # Map of unigram counts
 counts_tt = {}  # Map of tt bigram counts
 counts_tw = {}  # Map of wt bigram counts
@@ -32,8 +30,8 @@ def viterbi(test):
     V['0/###']= 1.0
     back['0/###'] = None # This has no effect really
     for tag in tag_dict[obs[1]]:
-        V[makekey('1', tag)] = prob(START, tag, 'a') + prob(tag, obs[1], 'b')
-        back[makekey('1', tag)] = START
+        V[makekey('1', tag)] = prob('###', tag, 'a') + prob(tag, obs[1], 'b')
+        back[makekey('1', tag)] = '###'
 
     # Recurse
     for j in xrange(2, len(obs)):
@@ -59,7 +57,7 @@ def viterbi(test):
                     V[vj] = u
                     back[makekey(str(j),tj)] = ti   # and store backpointer to ti that gave that u
 
-    result  = [START]
+    result  = ["<s>"]
     predict = ['###']
     prev = predict[0]
     known, novel, ktotal, ntotal = 0, 0, 1e-100, 1e-100
@@ -99,8 +97,8 @@ def unpack(filename): # Returns a list of words and parallel list of tags
     try:
         infile = open(filename, 'r')
 
-        tags = [START]
-        words = [START]
+        tags = []
+        words = []
 
         for line in infile:
             items = line.split()
