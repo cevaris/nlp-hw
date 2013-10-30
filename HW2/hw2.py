@@ -4,9 +4,9 @@ import sys
 import math
 
 
-# Reference, Christopher Hogan
-# https://github.com/chrismikehogan/Viterbi-Tagger
+# Reference https://github.com/chrismikehogan/Viterbi-Tagger
 
+UNKOWNOWN  = 'UNKOWN'
 START   = '<s>'
 EPSILON = 1e-100
 
@@ -17,14 +17,13 @@ tag_dict   = {} # Map of observed tags for given word
 sing_tt    = {} # Map of singletons, sing(.|ti-1)
 sing_tw    = {} # Map of singletons, sing(.|ti)
 
-num_of_tags = 0
-num_of_tags = 0
+num_of_tags  = 0
+num_of_words = 0
 
 def viterbi(test):
 
     (obs, gold) = load(test)  # Read in test file and tags
     
-    neg_infinity = float('-inf')# for logp(0)
     V = {}      # dictionary to store viterbi values
     back = {}   # dictionary to store backpointers
     A = {}      # transition probabilities
@@ -38,12 +37,12 @@ def viterbi(test):
         back[makekey('1', tag)] = START
 
     for j in xrange(2, len(obs)):
-    	# Get tag from lexicon, else get UNK token
-        for tj in tag_dict.get(obs[j], tag_dict['UNK']):       
+    	# Get tag from lexicon, else get UNKOWN token
+        for tj in tag_dict.get(obs[j], tag_dict['UNKOWN']):       
 
             vj = makekey(str(j), tj)
-            # Get tag from lexicon, else return UNK token
-            for ti in tag_dict.get(obs[j-1], tag_dict['UNK']): 
+            # Get tag from lexicon, else return UNKOWN token
+            for ti in tag_dict.get(obs[j-1], tag_dict['UNKOWN']): 
                 
                 vi = makekey(str(j-1), ti)
                 tt = makekey(ti, tj)
@@ -55,11 +54,10 @@ def viterbi(test):
                 if tw not in B:
                     B[tw] = prob(tj, obs[j], 'B')
 
-
                 candidate = V[vi] + A[tt] + B[tw]
 
     			# Max calculation
-                if candidate > V.get(vj, neg_infinity):
+                if candidate > V.get(vj, float('-inf')):
                     V[vj] = candidate
                     back[makekey(str(j),tj)] = ti
 
@@ -93,77 +91,61 @@ def viterbi(test):
 
 
 def load(filename): 
-    try: 
-    	with open(filename, 'r') as inputFile:
 
-            tags  = [START]
-            words = [START]
+    with open(filename, 'r') as inputFile:
 
-            for line in inputFile:
-                items = line.split()
+        tags  = [START]
+        words = [START]
 
-                if not (items == ['.','.'] or items == []):
-    	            (word, tag) = tuple(items)
-    	            tags.append(tag)
-    	            words.append(word)
+        for line in inputFile:
+            items = line.split()
 
-            tags.append('**')
-            words.append('**')
+            if not (items == ['.','.'] or items == []):
+	            (word, tag) = tuple(items)
+	            tags.append(tag)
+	            words.append(word)
 
-        return words, tags
-    except IOError, err:
-        sys.exit("Couldn't open file at %s" % (filename))
+        tags.append('**')
+        words.append('**')
     
     return words, tags
 
 
 
 def train_models(filename):
+    global num_of_tags, num_of_words
 
     (words, tags) = load(filename)
     
-    counts_uni['_N_'] = len(tags)
-
-    tag_dict[words[0]] = [tags[0]]
-    tag_dict['UNK'] = []
+    num_of_tags = len(tags)
+    tag_dict['UNKOWN'] = []
     
-    counts_uni[words[0]] = 1
-    counts_uni[tags[0]] = 1
-    
-    tw = makekey(tags[0], words[0])
-    counts_tw[tw] = 1
-    sing_tw[tags[0]] = 1
 
-    for i in xrange(1, len(words)):
+    for i in xrange(0, len(words)):
+
+        # Add all tags except '**' to UNKOWN
+        if (tags[i] not in tag_dict['UNKOWN']) and (tags[i] != '**'):
+            tag_dict['UNKOWN'].append(tags[i])
 
         tw = makekey(tags[i], words[i])
-
-        # Add all tags except '**' to UNK
-        if (tags[i] not in tag_dict['UNK']) and (tags[i] != '**'):
-            tag_dict['UNK'].append(tags[i])
-
-        # If word/tag bigram has never been observed and
-        # is not in tag_dict, add it. Otherwise, append
-        # tag to list of possible tags for the word
+        
         if counts_tw.get(tw, 0) == 0:
             if words[i] not in tag_dict:
-                tag_dict[words[i]]= [tags[i]]
-            else:
-                tag_dict[words[i]].append(tags[i])
+                tag_dict[words[i]]= []
+
+            num_of_words += 1
+            tag_dict[words[i]].append(tags[i])
 
         # Increment tag/word count
         counts_tw[tw] = counts_tw.get(tw, 0) + 1
 
-        # Increment unigram counts
-        for key in [words[i], tags[i]]:
-            counts_uni[key] = counts_uni.get(key, 0) + 1
+        counts_uni[tags[i]] = counts_uni.get(tags[i], 0) + 1
+        counts_uni[words[i]] = counts_uni.get(words[i], 0) + 1
 
         # Increment tag transitions count
         tt = makekey(tags[i-1], tags[i])
         counts_tt[tt] = counts_tt.get(tt, 0) + 1
 
-    counts_uni['_V_'] = len(tag_dict.keys()) # number of types
-    print counts_uni['_V_'], counts_uni['_N_']
 
 
 def prob(i, j, switch):
@@ -172,14 +154,14 @@ def prob(i, j, switch):
     if switch == 'A':
         tt = makekey(i, j)
 
-        backoff = float(counts_uni[j])/counts_uni['_N_']
+        backoff = float(counts_uni[j])/num_of_tags
         return float(counts_tt.get(tt, 0) * backoff)/(counts_uni[i])
 
     # and if computing emmission
     elif switch == 'B':
         tw = makekey(i, j)
 
-        backoff = float(counts_uni.get(j, 0) + 1)/(counts_uni['_N_']+counts_uni['_V_'])
+        backoff = float(counts_uni.get(j, 0) + 1)/(num_of_tags+num_of_words)
         return float(counts_tw.get(tw, 0)+ backoff)/(counts_uni[i])
 
     else:
