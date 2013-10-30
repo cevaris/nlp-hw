@@ -7,6 +7,8 @@ import math
 # Reference, Christopher Hogan
 # https://github.com/chrismikehogan/Viterbi-Tagger
 
+START = '<s>'
+
 counts_uni = {} # Map of unigram counts
 counts_tt = {}  # Map of tt bigram counts
 counts_tw = {}  # Map of wt bigram counts
@@ -21,17 +23,17 @@ def viterbi(test):
     (obs, gold) = unpack(test)  # Read in test file and tags
     
     neg_infinity = float('-inf')# for logp(0)
-    v = {}      # dictionary to store viterbi values
+    V = {}      # dictionary to store viterbi values
     back = {}   # dictionary to store backpointers
-    a = {}      # transition probabilities
-    b = {}      # emission probabilities
+    A = {}      # transition probabilities
+    B = {}      # emission probabilities
 
     # Initialize for timesteps 0 and 1
-    v['0/###']= 1.0
+    V['0/###']= 1.0
     back['0/###'] = None # This has no effect really
     for tag in tag_dict[obs[1]]:
-        v[makekey('1', tag)] = prob('###', tag, 'a') + prob(tag, obs[1], 'b')
-        back[makekey('1', tag)] = '###'
+        V[makekey('1', tag)] = prob(START, tag, 'a') + prob(tag, obs[1], 'b')
+        back[makekey('1', tag)] = START
 
     # Recurse
     for j in xrange(2, len(obs)):
@@ -45,19 +47,19 @@ def viterbi(test):
                 tw = makekey(tj, obs[j])
 
                 # If probs are not already known, compute them
-                if tt not in a:
-                    a[tt] = prob(ti, tj, 'a')
-                if tw not in b:
-                    b[tw] = prob(tj, obs[j], 'b')
+                if tt not in A:
+                    A[tt] = prob(ti, tj, 'a')
+                if tw not in B:
+                    B[tw] = prob(tj, obs[j], 'b')
 
                 # then find the viterbi value
-                u = v[vi] + a[tt] + b[tw]
+                u = V[vi] + A[tt] + B[tw]
     
-                if u > v.get(vj, neg_infinity):     # If u is max so far, set it so,
-                    v[vj] = u
+                if u > V.get(vj, neg_infinity):     # If u is max so far, set it so,
+                    V[vj] = u
                     back[makekey(str(j),tj)] = ti   # and store backpointer to ti that gave that u
 
-    result  = ["<s>"]
+    result  = [START]
     predict = ['###']
     prev = predict[0]
     known, novel, ktotal, ntotal = 0, 0, 1e-100, 1e-100
@@ -85,7 +87,7 @@ def viterbi(test):
     tpct = float(known + novel) / (ktotal + ntotal) * 100
     kpct = float(known) / ktotal * 100
     npct = float(novel) / ntotal * 100
-    path_prob = v[makekey(str(len(obs)-1), predict[-1])]
+    path_prob = V[makekey(str(len(obs)-1), predict[-1])]
     ppw = math.exp(float(-1*path_prob)/(len(obs)-1))
 
     print "Tagging accuracy: %.4g%% (known: %.4g%% novel: %.4g%%) \nPerplexity per tagged test word: %.3f" % (tpct, kpct, npct, ppw)
@@ -97,8 +99,8 @@ def unpack(filename): # Returns a list of words and parallel list of tags
     try:
         infile = open(filename, 'r')
 
-        tags = []
-        words = []
+        tags = [START]
+        words = [START]
 
         for line in infile:
             items = line.split()
@@ -118,7 +120,7 @@ def unpack(filename): # Returns a list of words and parallel list of tags
     infile.close()
     return words, tags
 
-def train_params(filename):
+def train_models(filename):
 
     (words, tags) = unpack(filename)
     counts_uni['_N_'] = len(tags) - 1 # number of tags
@@ -198,7 +200,6 @@ def prob(i, j, switch):
         lambdap = sing_tw[i] + 1e-100
         return math.log(float(counts_tw.get(tw, 0)+lambdap*backoff)/(counts_uni[i] + lambdap))
 
-    # return prob of 0 if function isnt called properly
     else:
 		raise Error('Case Not Found')
     
