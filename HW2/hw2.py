@@ -1,12 +1,11 @@
 #!/usr/bin/python
 
+# Reference https://github.com/chrismikehogan/Viterbi-Tagger
+
 import sys
 import math
 
-
-# Reference https://github.com/chrismikehogan/Viterbi-Tagger
-
-UNKOWNOWN  = 'UNKOWN'
+UNKOWN  = '<UNK>'
 START   = '<s>'
 EPSILON = 1e-100
 
@@ -38,11 +37,11 @@ def viterbi(test):
 
     for j in xrange(2, len(obs)):
     	# Get tag from lexicon, else get UNKOWN token
-        for tj in tag_dict.get(obs[j], tag_dict['UNKOWN']):       
+        for tj in tag_dict.get(obs[j], tag_dict[UNKOWN]):       
 
             vj = makekey(str(j), tj)
             # Get tag from lexicon, else return UNKOWN token
-            for ti in tag_dict.get(obs[j-1], tag_dict['UNKOWN']): 
+            for ti in tag_dict.get(obs[j-1], tag_dict[UNKOWN]): 
                 
                 vi = makekey(str(j-1), ti)
                 tt = makekey(ti, tj)
@@ -118,14 +117,14 @@ def train_models(filename):
     (words, tags) = load(filename)
     
     num_of_tags = len(tags)
-    tag_dict['UNKOWN'] = []
+    tag_dict[UNKOWN] = []
     
 
     for i in xrange(0, len(words)):
 
         # Add all tags except '**' to UNKOWN
-        if (tags[i] not in tag_dict['UNKOWN']) and (tags[i] != '**'):
-            tag_dict['UNKOWN'].append(tags[i])
+        if (tags[i] not in tag_dict[UNKOWN]) and (tags[i] != '**'):
+            tag_dict[UNKOWN].append(tags[i])
 
         tw = makekey(tags[i], words[i])
         
