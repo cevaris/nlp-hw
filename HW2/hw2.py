@@ -118,6 +118,7 @@ def load(filename): # Returns a list of words and parallel list of tags
 def train_models(filename):
 
     (words, tags) = load(filename)
+    
     counts_uni['_N_'] = len(tags)
 
     tag_dict[words[0]] = [tags[0]]
@@ -200,8 +201,9 @@ def prob(i, j, switch):
 def makekey(*words):
     return '/'.join(words)
 
-def main():
 
+def main():
+	
 	train = 'train.txt'
 	test  = 'test.txt'
 	
