@@ -11,17 +11,17 @@ START   = '<s>'
 EPSILON = 1e-100
 
 counts_uni = {} # Map of unigram counts
-counts_tt = {}  # Map of tt bigram counts
-counts_tw = {}  # Map of wt bigram counts
-tag_dict = {}   # Map of observed tags for given word
-sing_tt = {}    # Map of singletons, sing(.|ti-1)
-sing_tw = {}    # Map of singletons, sing(.|ti)
+counts_tt  = {} # Map of tt bigram counts
+counts_tw  = {} # Map of wt bigram counts
+tag_dict   = {} # Map of observed tags for given word
+sing_tt    = {} # Map of singletons, sing(.|ti-1)
+sing_tw    = {} # Map of singletons, sing(.|ti)
 
 num_of_states = 0
 
 def viterbi(test):
 
-    (obs, gold) = unpack(test)  # Read in test file and tags
+    (obs, gold) = load(test)  # Read in test file and tags
     
     neg_infinity = float('-inf')# for logp(0)
     V = {}      # dictionary to store viterbi values
@@ -90,39 +90,35 @@ def viterbi(test):
 
     return result
 
-def unpack(filename): # Returns a list of words and parallel list of tags
+def load(filename): # Returns a list of words and parallel list of tags
+
+
 
     try:
-        infile = open(filename, 'r')
+    	with open(filename, 'r') as inputFile:
+	        tags  = [START]
+	        words = [START]
 
-        tags  = [START]
-        words = [START]
+	        for line in inputFile:
+	            items = line.split()
 
-        for line in infile:
-            items = line.split()
+	            if not (items == ['.','.'] or items == []):
+		            (word, tag) = tuple(items)
+		            tags.append(tag)
+		            words.append(word)
 
-            if items == ['.','.'] or items == []:
-                continue
-
-            (word, tag) = tuple(items)
-            tags.append(tag)
-            words.append(word)
-
-        tags.append('**')
-    	words.append('**')
+	        tags.append('**')
+	    	words.append('**')
     
     except IOError, err:
         sys.exit("Couldn't open file at %s" % (filename))
-    
 
-
-    infile.close()
     return words, tags
 
 def train_models(filename):
 
-    (words, tags) = unpack(filename)
-    counts_uni['_N_'] = len(tags) - 1 # number of tags
+    (words, tags) = load(filename)
+    counts_uni['_N_'] = len(tags)
 
     tag_dict[words[0]] = [tags[0]]
     tag_dict['UNK'] = []
@@ -134,7 +130,6 @@ def train_models(filename):
     counts_tw[tw] = 1
     sing_tw[tags[0]] = 1
 
-    # Iterate over rest of words/tags
     for i in xrange(1, len(words)):
 
         tw = makekey(tags[i], words[i])
@@ -152,20 +147,14 @@ def train_models(filename):
             else:
                 tag_dict[words[i]].append(tags[i])
 
-        # Increment tw count
+        # Increment tag/word count
         counts_tw[tw] = counts_tw.get(tw, 0) + 1
-
-        # Adjust singleton count
-        if (counts_tw[tw] == 1):
-            sing_tw[tags[i]] = sing_tw.get(tags[i], 0) + 1
-        elif (counts_tw[tw] == 2):
-            sing_tw[tags[i]] -= 1
 
         # Increment unigram counts
         for key in [words[i], tags[i]]:
             counts_uni[key] = counts_uni.get(key, 0) + 1
 
-        # Increment tt count
+        # Increment tag transitions count
         tt = makekey(tags[i-1], tags[i])
         counts_tt[tt] = counts_tt.get(tt, 0) + 1
 
@@ -174,6 +163,13 @@ def train_models(filename):
             sing_tt[tags[i-1]] = sing_tt.get(tags[i-1], 0) + 1
         elif (counts_tt[tt] == 2):
             sing_tt[tags[i-1]] -= 1
+
+        # Adjust singleton count
+        if (counts_tw[tw] == 1):
+            sing_tw[tags[i]] = sing_tw.get(tags[i], 0) + 1
+            print sing_tw[tags[i]], tags[i]
+        elif (counts_tw[tw] == 2):
+            sing_tw[tags[i]] -= 1
 
     num_of_states = len(tag_dict.keys()) # number of types
     
@@ -188,7 +184,6 @@ def prob(i, j, switch):
 
         backoff = float(counts_uni[j])/counts_uni['_N_']
         lambdap = sing_tt[i] + EPSILON
-
         return math.log(float(counts_tt.get(tt, 0) + lambdap*backoff)/(counts_uni[i] + lambdap))
 
     # and if computing emmission
