@@ -7,6 +7,8 @@ import math
 # Reference, Christopher Hogan
 # https://github.com/chrismikehogan/Viterbi-Tagger
 
+START = '<s>'
+
 counts_uni = {} # Map of unigram counts
 counts_tt = {}  # Map of tt bigram counts
 counts_tw = {}  # Map of wt bigram counts
@@ -27,18 +29,19 @@ def viterbi(test):
     B = {}      # emission probabilities
 
     # Initialize for timesteps 0 and 1
-    V['0/###']= 1.0
-    back['0/###'] = None # This has no effect really
+    V['0/**']= 1.0
+    back['0/**'] = None # This has no effect really
     for tag in tag_dict[obs[1]]:
-        V[makekey('1', tag)] = prob('###', tag, 'a') + prob(tag, obs[1], 'b')
-        back[makekey('1', tag)] = '###'
+        V[makekey('1', tag)] = prob(START, tag, 'a') + prob(tag, obs[1], 'b')
+        back[makekey('1', tag)] = START
 
-    # Recurse
     for j in xrange(2, len(obs)):
-        for tj in tag_dict.get(obs[j], tag_dict['UNK']):        # For each possible tag tj for current obs at j
+    	# Get tag from lexicon, else return UNK token
+        for tj in tag_dict.get(obs[j], tag_dict['UNK']):       
 
             vj = makekey(str(j), tj)
-            for ti in tag_dict.get(obs[j-1], tag_dict['UNK']):  # For each possible previous tag ti leading to current tag tj
+            # Get tag from lexicon, else return UNK token
+            for ti in tag_dict.get(obs[j-1], tag_dict['UNK']): 
                 
                 vi = makekey(str(j-1), ti)
                 tt = makekey(ti, tj)
@@ -50,24 +53,22 @@ def viterbi(test):
                 if tw not in B:
                     B[tw] = prob(tj, obs[j], 'b')
 
-                # then find the viterbi value
-                u = V[vi] + A[tt] + B[tw]
-    
-                if u > V.get(vj, neg_infinity):     # If u is max so far, set it so,
-                    V[vj] = u
-                    back[makekey(str(j),tj)] = ti   # and store backpointer to ti that gave that u
 
-    result  = ["<s>"]
-    predict = ['###']
+                candidate = V[vi] + A[tt] + B[tw]
+
+    			# Max calculation
+                if candidate > V.get(vj, neg_infinity):
+                    V[vj] = candidate
+                    back[makekey(str(j),tj)] = ti
+
+    result  = [START]
+    predict = ['**']
     prev = predict[0]
     known, novel, ktotal, ntotal = 0, 0, 1e-100, 1e-100
 
-    # Follow backpointers to find most likely sequence. As
-    # the sequence is built, each tag that is added (except
-    # "###") is scored against its annotated tag from gold.
     for i in xrange(len(obs)-1, 0, -1):
         
-        if obs[i] != '###':
+        if obs[i] != '**':
             if obs[i] in counts_uni:
                 ktotal += 1
                 if predict[0] == gold[i]:
@@ -97,8 +98,8 @@ def unpack(filename): # Returns a list of words and parallel list of tags
     try:
         infile = open(filename, 'r')
 
-        tags = []
-        words = []
+        tags  = [START]
+        words = [START]
 
         for line in infile:
             items = line.split()
@@ -106,13 +107,16 @@ def unpack(filename): # Returns a list of words and parallel list of tags
             if items == ['.','.'] or items == []:
                 continue
 
-            # print items
             (word, tag) = tuple(items)
             tags.append(tag)
             words.append(word)
+
+        tags.append('**')
+    	words.append('**')
     
     except IOError, err:
         sys.exit("Couldn't open file at %s" % (filename))
+    
 
 
     infile.close()
@@ -138,8 +142,8 @@ def train_models(filename):
 
         tw = makekey(tags[i], words[i])
 
-        # Add all tags except '###' to UNK
-        if (tags[i] not in tag_dict['UNK']) and (tags[i] != '###'):
+        # Add all tags except '**' to UNK
+        if (tags[i] not in tag_dict['UNK']) and (tags[i] != '**'):
             tag_dict['UNK'].append(tags[i])
 
         # If word/tag bigram has never been observed and
@@ -176,8 +180,8 @@ def train_models(filename):
 
     num_of_states = len(tag_dict.keys()) # number of types
     
-    # Fix unigram counts for "###"
-    counts_uni['###'] = counts_uni['###'] / 2
+    # Fix unigram counts for "**"
+    counts_uni['**'] = counts_uni['**'] / 2
 
 def prob(i, j, switch):
 
