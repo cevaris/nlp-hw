@@ -8,6 +8,7 @@ import math
 UNKOWN  = '<UNK>'
 START   = '<s>'
 EPSILON = 1e-100
+LAPLACE_SMOOTH = 1
 
 counts_uni = {} # Map of unigram counts
 counts_tt  = {} # Map of tt bigram counts
@@ -135,11 +136,12 @@ def train_models(filename):
             num_of_words += 1
             tag_dict[words[i]].append(tags[i])
 
-        # Increment tag/word count
-        counts_tw[tw] = counts_tw.get(tw, 0) + 1
-
+        # Increment Unigram counts
         counts_uni[tags[i]] = counts_uni.get(tags[i], 0) + 1
         counts_uni[words[i]] = counts_uni.get(words[i], 0) + 1
+
+        # Increment tag/word count
+        counts_tw[tw] = counts_tw.get(tw, 0) + 1
 
         # Increment tag transitions count
         tt = makekey(tags[i-1], tags[i])
@@ -149,23 +151,20 @@ def train_models(filename):
 
 def prob(i, j, switch):
 
-    # If computing transition probs
-    if switch == 'A':
-        tt = makekey(i, j)
+    key = makekey(i, j)
 
-        backoff = float(counts_uni[j])/num_of_tags
-        return float(counts_tt.get(tt, 0) * backoff)/(counts_uni[i])
-
-    # and if computing emmission
-    elif switch == 'B':
-        tw = makekey(i, j)
-
-        backoff = float(counts_uni.get(j, 0) + 1)/(num_of_tags+num_of_words)
-        return float(counts_tw.get(tw, 0)+ backoff)/(counts_uni[i])
-
-    else:
-		raise Error('Case Not Found')
+    if switch == 'A': # If computing transition probs
+        
+        # C(Tag Transition)/C(Tags)
+        return float(counts_tt.get(key, LAPLACE_SMOOTH))/(counts_uni[i])
     
+    elif switch == 'B': # and if computing emmission
+        
+        # C(Tag,Words)/C(Tags)
+        return float(counts_tw.get(key, 0))/(counts_uni[i])
+    
+
+
 def makekey(*words):
     return '/'.join(words)
 
