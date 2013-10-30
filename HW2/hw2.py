@@ -17,6 +17,9 @@ tag_dict   = {} # Map of observed tags for given word
 sing_tt    = {} # Map of singletons, sing(.|ti-1)
 sing_tw    = {} # Map of singletons, sing(.|ti)
 
+num_of_tags = 0
+num_of_tags = 0
+
 def viterbi(test):
 
     (obs, gold) = load(test)  # Read in test file and tags
@@ -31,11 +34,11 @@ def viterbi(test):
     V['0/**']= 1.0
     back['0/**'] = None # This has no effect really
     for tag in tag_dict[obs[1]]:
-        V[makekey('1', tag)] = prob(START, tag, 'a') + prob(tag, obs[1], 'b')
+        V[makekey('1', tag)] = prob(START, tag, 'A') + prob(tag, obs[1], 'B')
         back[makekey('1', tag)] = START
 
     for j in xrange(2, len(obs)):
-    	# Get tag from lexicon, else return UNK token
+    	# Get tag from lexicon, else get UNK token
         for tj in tag_dict.get(obs[j], tag_dict['UNK']):       
 
             vj = makekey(str(j), tj)
@@ -48,9 +51,9 @@ def viterbi(test):
 
                 # If probs are not already known, compute them
                 if tt not in A:
-                    A[tt] = prob(ti, tj, 'a')
+                    A[tt] = prob(ti, tj, 'A')
                 if tw not in B:
-                    B[tw] = prob(tj, obs[j], 'b')
+                    B[tw] = prob(tj, obs[j], 'B')
 
 
                 candidate = V[vi] + A[tt] + B[tw]
@@ -88,30 +91,32 @@ def viterbi(test):
 
     return result
 
-def load(filename): # Returns a list of words and parallel list of tags
 
-
-
-    try:
+def load(filename): 
+    try: 
     	with open(filename, 'r') as inputFile:
-	        tags  = [START]
-	        words = [START]
 
-	        for line in inputFile:
-	            items = line.split()
+            tags  = [START]
+            words = [START]
 
-	            if not (items == ['.','.'] or items == []):
-		            (word, tag) = tuple(items)
-		            tags.append(tag)
-		            words.append(word)
+            for line in inputFile:
+                items = line.split()
 
-	        tags.append('**')
-	    	words.append('**')
-    
+                if not (items == ['.','.'] or items == []):
+    	            (word, tag) = tuple(items)
+    	            tags.append(tag)
+    	            words.append(word)
+
+            tags.append('**')
+            words.append('**')
+
+        return words, tags
     except IOError, err:
         sys.exit("Couldn't open file at %s" % (filename))
-
+    
     return words, tags
+
+
 
 def train_models(filename):
 
@@ -158,22 +163,24 @@ def train_models(filename):
         counts_tt[tt] = counts_tt.get(tt, 0) + 1
 
     counts_uni['_V_'] = len(tag_dict.keys()) # number of types
+    print counts_uni['_V_'], counts_uni['_N_']
+
 
 def prob(i, j, switch):
 
     # If computing transition probs
-    if switch == 'a':
+    if switch == 'A':
         tt = makekey(i, j)
 
         backoff = float(counts_uni[j])/counts_uni['_N_']
-        return float(counts_tt.get(tt, 0) *backoff)/(counts_uni[i])
+        return float(counts_tt.get(tt, 0) * backoff)/(counts_uni[i])
 
     # and if computing emmission
-    elif switch == 'b':
+    elif switch == 'B':
         tw = makekey(i, j)
 
         backoff = float(counts_uni.get(j, 0) + 1)/(counts_uni['_N_']+counts_uni['_V_'])
-        return float(counts_tw.get(tw, 0)+backoff)/(counts_uni[i])
+        return float(counts_tw.get(tw, 0)+ backoff)/(counts_uni[i])
 
     else:
 		raise Error('Case Not Found')
