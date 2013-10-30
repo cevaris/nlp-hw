@@ -7,7 +7,8 @@ import math
 # Reference, Christopher Hogan
 # https://github.com/chrismikehogan/Viterbi-Tagger
 
-START = '<s>'
+START   = '<s>'
+EPSILON = 1e-100
 
 counts_uni = {} # Map of unigram counts
 counts_tt = {}  # Map of tt bigram counts
@@ -64,7 +65,7 @@ def viterbi(test):
     result  = [START]
     predict = ['**']
     prev = predict[0]
-    known, novel, ktotal, ntotal = 0, 0, 1e-100, 1e-100
+    known, novel, ktotal, ntotal = 0, 0, EPSILON, EPSILON
 
     for i in xrange(len(obs)-1, 0, -1):
         
@@ -84,12 +85,8 @@ def viterbi(test):
         prev = tag
 
     tpct = float(known + novel) / (ktotal + ntotal) * 100
-    kpct = float(known) / ktotal * 100
-    npct = float(novel) / ntotal * 100
-    path_prob = V[makekey(str(len(obs)-1), predict[-1])]
-    ppw = math.exp(float(-1*path_prob)/(len(obs)-1))
 
-    print "Tagging accuracy: %.4g%% (known: %.4g%% novel: %.4g%%) \nPerplexity per tagged test word: %.3f" % (tpct, kpct, npct, ppw)
+    print "Tagging accuracy: %.4g%%" % tpct
 
     return result
 
@@ -190,7 +187,7 @@ def prob(i, j, switch):
         tt = makekey(i, j)
 
         backoff = float(counts_uni[j])/counts_uni['_N_']
-        lambdap = sing_tt[i] + 1e-100
+        lambdap = sing_tt[i] + EPSILON
 
         return math.log(float(counts_tt.get(tt, 0) + lambdap*backoff)/(counts_uni[i] + lambdap))
 
@@ -199,7 +196,7 @@ def prob(i, j, switch):
         tw = makekey(i, j)
 
         backoff = float(counts_uni.get(j, 0) + 1)/(counts_uni['_N_']+num_of_states)
-        lambdap = sing_tw[i] + 1e-100
+        lambdap = sing_tw[i] + EPSILON
         return math.log(float(counts_tw.get(tw, 0)+lambdap*backoff)/(counts_uni[i] + lambdap))
 
     else:
