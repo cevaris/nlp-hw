@@ -167,14 +167,14 @@ def train_models(filename):
         # Adjust singleton count
         if (counts_tw[tw] == 1):
             sing_tw[tags[i]] = sing_tw.get(tags[i], 0) + 1
-            print sing_tw[tags[i]], tags[i]
         elif (counts_tw[tw] == 2):
             sing_tw[tags[i]] -= 1
 
+
+    # print counts_tw
+    # print sing_tw
+
     num_of_states = len(tag_dict.keys()) # number of types
-    
-    # Fix unigram counts for "**"
-    counts_uni['**'] = counts_uni['**'] / 2
 
 def prob(i, j, switch):
 
