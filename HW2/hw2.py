@@ -16,9 +16,8 @@ sing_tw = {}    # Map of singletons, sing(.|ti)
 
 num_of_states = 0
 
-def viterbi(train, test):
+def viterbi(test):
 
-    count(train)                # Train model parameters
     (obs, gold) = unpack(test)  # Read in test file and tags
     
     neg_infinity = float('-inf')# for logp(0)
@@ -26,7 +25,6 @@ def viterbi(train, test):
     back = {}   # dictionary to store backpointers
     a = {}      # transition probabilities
     b = {}      # emission probabilities
-    progress = 0
 
     # Initialize for timesteps 0 and 1
     v['0/###']= 1.0
@@ -120,17 +118,11 @@ def unpack(filename): # Returns a list of words and parallel list of tags
     infile.close()
     return words, tags
 
-def count(filename):
-    """
-count() sets the parameters of the HMM model and
-stores them in the maps counts_*, tag_dict, and sing_*
-"""
+def train_params(filename):
 
     (words, tags) = unpack(filename)
-    progress = 0
-    counts_uni['_N_'] = len(tags) - 1 # number of tokens
+    counts_uni['_N_'] = len(tags) - 1 # number of tags
 
-    # Initialize counts_uni, counts_tw and tag_dict with first timestep and UNK
     tag_dict[words[0]] = [tags[0]]
     tag_dict['UNK'] = []
     
@@ -214,10 +206,12 @@ def makekey(*words):
     return '/'.join(words)
 
 def main():
+
 	train = 'train.txt'
 	test  = 'test.txt'
- 	# print viterbi(train,test)
- 	viterbi(train,test)
+	
+	train_models(train) 
+ 	viterbi(test)
     
 if __name__ == "__main__":
     main()
