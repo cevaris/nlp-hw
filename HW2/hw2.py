@@ -5,10 +5,11 @@
 import sys
 import math
 
-UNKOWN  = '<UNK>'
+UNKOWN  = '<u>'
 START   = '<s>'
 EPSILON = 1e-100
 LAPLACE_SMOOTH = 1
+REPLACE_WITH_UKNOWN = 1
 
 counts_uni = {} # Map of unigram counts
 counts_tt  = {} # Map of tt bigram counts
@@ -33,7 +34,7 @@ def viterbi(test):
     V['0/**']= 1.0
     back['0/**'] = None # This has no effect really
     for tag in tag_dict[obs[1]]:
-        V[makekey('1', tag)] = prob(START, tag, 'A') + prob(tag, obs[1], 'B')
+        V[makekey('1', tag)] = tt_prob(START, tag) + tw_prob(tag, obs[1])
         back[makekey('1', tag)] = START
 
     for j in xrange(2, len(obs)):
@@ -50,9 +51,9 @@ def viterbi(test):
 
                 # If probs are not already known, compute them
                 if tt not in A:
-                    A[tt] = prob(ti, tj, 'A')
+                    A[tt] = tt_prob(ti, tj)
                 if tw not in B:
-                    B[tw] = prob(tj, obs[j], 'B')
+                    B[tw] = tw_prob(tj, obs[j])
 
                 candidate = V[vi] + A[tt] + B[tw]
 
@@ -61,6 +62,11 @@ def viterbi(test):
                     V[vj] = candidate
                     back[makekey(str(j),tj)] = ti
 
+    # Evaluate 
+    eval(back, obs, gold)
+
+
+def eval(back, obs, gold):
     result  = [START]
     predict = ['**']
     prev = predict[0]
@@ -149,21 +155,18 @@ def train_models(filename):
 
 
 
-def prob(i, j, switch):
 
-    key = makekey(i, j)
-
-    if switch == 'A': # If computing transition probs
-        
-        # C(Tag Transition)/C(Tags)
-        return float(counts_tt.get(key, LAPLACE_SMOOTH))/(counts_uni[i])
+def tt_prob(i, j):
+    # A    
+    # C(Tag Transition)/C(Tags)
+    return float(counts_tt.get(makekey(i, j), LAPLACE_SMOOTH))/(counts_uni[i])
+       
     
-    elif switch == 'B': # and if computing emmission
-        
-        # C(Tag,Words)/C(Tags)
-        return float(counts_tw.get(key, 0))/(counts_uni[i])
+def tw_prob(i, j):
+    # B
+    # C(Tag,Words)/C(Tags)
+    return float(counts_tw.get(makekey(i, j), 0))/(counts_uni[i])
     
-
 
 def makekey(*words):
     return '/'.join(words)
