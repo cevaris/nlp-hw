@@ -125,6 +125,9 @@ def train_models(filename):
 
         tw = makekey(tags[i], words[i])
 
+        if (tags[i] not in tag_dict[UNKOWN]) and (tags[i] != '**'):
+            tag_dict[UNKOWN].append(tags[i])
+
         if counts_tw.get(tw, 0) == 0:
             if words[i] not in tag_dict:
                 tag_dict[words[i]]= []
