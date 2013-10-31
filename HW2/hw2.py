@@ -15,8 +15,6 @@ counts_uni = {} # Map of unigram counts
 counts_tt  = {} # Map of tt bigram counts
 counts_tw  = {} # Map of wt bigram counts
 tag_dict   = {} # Map of observed tags for given word
-sing_tt    = {} # Map of singletons, sing(.|ti-1)
-sing_tw    = {} # Map of singletons, sing(.|ti)
 
 num_of_tags  = 0
 num_of_words = 0
@@ -30,21 +28,20 @@ def viterbi(test):
     A = {}      # transition probabilities
     B = {}      # emission probabilities
 
-    # Initialize for timesteps 0 and 1
     V['0/**']= 1.0
-    back['0/**'] = None # This has no effect really
+    back['0/**'] = None 
     for tag in tag_dict[obs[1]]:
         V[makekey('1', tag)] = tt_prob(START, tag) + tw_prob(tag, obs[1])
         back[makekey('1', tag)] = START
 
     for j in xrange(2, len(obs)):
     	# Get tag from lexicon, else get UNKOWN token
-        for tj in tag_dict.get(obs[j], tag_dict[UNKOWN]):       
+        for tj in tag_dict.get(obs[j], tag_dict[UNKOWN]):   
 
             vj = makekey(str(j), tj)
             # Get tag from lexicon, else return UNKOWN token
             for ti in tag_dict.get(obs[j-1], tag_dict[UNKOWN]): 
-                
+                                
                 vi = makekey(str(j-1), ti)
                 tt = makekey(ti, tj)
                 tw = makekey(tj, obs[j])
@@ -100,13 +97,12 @@ def load(filename):
 
     with open(filename, 'r') as inputFile:
 
-        tags  = [START]
-        words = [START]
+        tags, words = [START], [START]
 
         for line in inputFile:
             items = line.split()
 
-            if not (items == ['.','.'] or items == []):
+            if not (items == []):
 	            (word, tag) = tuple(items)
 	            tags.append(tag)
 	            words.append(word)
@@ -122,19 +118,13 @@ def train_models(filename):
     global num_of_tags, num_of_words
 
     (words, tags) = load(filename)
-    
     num_of_tags = len(tags)
     tag_dict[UNKOWN] = []
     
-
     for i in xrange(0, len(words)):
 
-        # Add all tags except '**' to UNKOWN
-        if (tags[i] not in tag_dict[UNKOWN]) and (tags[i] != '**'):
-            tag_dict[UNKOWN].append(tags[i])
-
         tw = makekey(tags[i], words[i])
-        
+
         if counts_tw.get(tw, 0) == 0:
             if words[i] not in tag_dict:
                 tag_dict[words[i]]= []
@@ -157,13 +147,11 @@ def train_models(filename):
 
 
 def tt_prob(i, j):
-    # A    
     # C(Tag Transition)/C(Tags)
     return float(counts_tt.get(makekey(i, j), LAPLACE_SMOOTH))/(counts_uni[i])
        
     
 def tw_prob(i, j):
-    # B
     # C(Tag,Words)/C(Tags)
     return float(counts_tw.get(makekey(i, j), 0))/(counts_uni[i])
     
