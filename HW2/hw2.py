@@ -35,13 +35,17 @@ def viterbi(test):
         back[makekey('1', tag)] = START
 
     for j in xrange(2, len(obs)):
+
+        if counts_uni.get(obs[j]) < REPLACE_WITH_UKNOWN:
+            obs[j] = UNKOWN
+
     	# Get tag from lexicon, else get UNKOWN token
         for tj in tag_dict.get(obs[j], tag_dict[UNKOWN]):   
 
             vj = makekey(str(j), tj)
             # Get tag from lexicon, else return UNKOWN token
             for ti in tag_dict.get(obs[j-1], tag_dict[UNKOWN]): 
-                                
+                        
                 vi = makekey(str(j-1), ti)
                 tt = makekey(ti, tj)
                 tw = makekey(tj, obs[j])
@@ -125,7 +129,7 @@ def train_models(filename):
 
         tw = makekey(tags[i], words[i])
 
-        if (tags[i] not in tag_dict[UNKOWN]) and (tags[i] != '**'):
+        if (tags[i] not in tag_dict[UNKOWN]):
             tag_dict[UNKOWN].append(tags[i])
 
         if counts_tw.get(tw, 0) == 0:
