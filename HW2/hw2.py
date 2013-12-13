@@ -21,8 +21,8 @@ num_of_words = 0
 
 def viterbi(test):
 
-    (obs, gold) = load(test)  # Read in test file and tags
-    (obs) = loadObs(test)  # Read in test file and tags
+    # (obs, gold) = load(test)  # Read in test file and tags
+    obs = loadTest(test)  # Read in test file and tags
     
     V = {}      # dictionary to store viterbi values
     back = {}   # dictionary to store backpointers
@@ -65,7 +65,30 @@ def viterbi(test):
                     back[makekey(str(j),tj)] = ti
 
     # Evaluate 
-    result = eval(back, obs, gold)
+    # result = eval(back, obs, gold)
+  
+    prev = '**'
+    result = []
+    for i in xrange(len(obs)-1, 0, -1):
+        
+        if len(obs[i]) > 0:
+
+            if '.' in obs[i]:
+                result.append( "%s" % obs[i] )
+            else:
+                result.append( "%s\t%s" % (obs[i],tag) )
+
+        if '.' in obs[i-1]:
+            result.append( "" )
+
+        tag = back[makekey(str(i), prev)]
+        prev = tag
+
+    for r in reversed(result):
+        print r
+
+
+
 
 
 def eval(back, obs, gold):
@@ -86,10 +109,10 @@ def eval(back, obs, gold):
                 if predict[0] == gold[i]:
                     novel += 1
 
-            # if '.' == obs[i]:
-            #     print "%s\t%s\n" % (obs[i],tag)
-            # else:
-            #     print "%s\t%s" % (obs[i],tag)
+            if '.' == obs[i]:
+                print "%s\t%s\n" % (obs[i],tag)
+            else:
+                print "%s\t%s" % (obs[i],tag)
 
         tag = back[makekey(str(i), prev)]
         result.append("%s %s" % (obs[i],tag))
@@ -128,20 +151,14 @@ def loadTest(filename):
 
     with open(filename, 'r') as inputFile:
 
-        # words = [START], [START]
+        words = [START]
 
         for line in inputFile:
-            items = line.split()
+            words.append(line.strip())
 
-            if items != []:
-                (word, tag) = tuple(items)
-                tags.append(tag)
-                words.append(word)
-
-        tags.append('**')
         words.append('**')
     
-    return words, tags
+    return words
 
 
 
