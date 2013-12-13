@@ -22,7 +22,6 @@ num_of_words = 0
 def viterbi(test):
 
     (obs, gold) = load(test)  # Read in test file and tags
-    (obs) = loadObs(test)  # Read in test file and tags
     
     V = {}      # dictionary to store viterbi values
     back = {}   # dictionary to store backpointers
@@ -37,8 +36,8 @@ def viterbi(test):
 
     for j in xrange(2, len(obs)):
 
-        # if counts_uni.get(obs[j]) < REPLACE_WITH_UKNOWN:
-        #     obs[j] = UNKOWN
+        if counts_uni.get(obs[j]) < REPLACE_WITH_UKNOWN:
+            obs[j] = UNKOWN
 
     	# Get tag from lexicon, else get UNKOWN token
         for tj in tag_dict.get(obs[j], tag_dict[UNKOWN]):   
@@ -65,7 +64,7 @@ def viterbi(test):
                     back[makekey(str(j),tj)] = ti
 
     # Evaluate 
-    result = eval(back, obs, gold)
+    eval(back, obs, gold)
 
 
 def eval(back, obs, gold):
@@ -86,18 +85,12 @@ def eval(back, obs, gold):
                 if predict[0] == gold[i]:
                     novel += 1
 
-            # if '.' == obs[i]:
-            #     print "%s\t%s\n" % (obs[i],tag)
-            # else:
-            #     print "%s\t%s" % (obs[i],tag)
-
         tag = back[makekey(str(i), prev)]
         result.append("%s %s" % (obs[i],tag))
         predict.insert(0, tag)
         prev = tag
 
     tpct = float(known + novel) / (ktotal + ntotal) * 100
-
 
     print "Tagging accuracy: %.4g%%" % tpct
 
@@ -113,30 +106,10 @@ def load(filename):
         for line in inputFile:
             items = line.split()
 
-            if items != []:
+            if not (items == []):
 	            (word, tag) = tuple(items)
 	            tags.append(tag)
 	            words.append(word)
-
-        tags.append('**')
-        words.append('**')
-    
-    return words, tags
-
-
-def loadTest(filename): 
-
-    with open(filename, 'r') as inputFile:
-
-        # words = [START], [START]
-
-        for line in inputFile:
-            items = line.split()
-
-            if items != []:
-                (word, tag) = tuple(items)
-                tags.append(tag)
-                words.append(word)
 
         tags.append('**')
         words.append('**')
@@ -197,7 +170,7 @@ def makekey(*words):
 def main():
 
 	train = 'train.txt'
-	test  = 'real-test.txt'
+	test  = 'test.txt'
 	
 	train_models(train) 
  	viterbi(test)
