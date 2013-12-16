@@ -61,6 +61,7 @@ def findEntities(data):
 
 def taggedData(file):
     for line in file:
+        print line
         if line == '\n':
             yield(['</s>', 'O'])
         else:

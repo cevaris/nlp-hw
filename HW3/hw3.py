@@ -36,8 +36,8 @@ def viterbi(test):
 
     for j in xrange(2, len(obs)):
 
-        if counts_uni.get(obs[j]) < REPLACE_WITH_UKNOWN:
-            obs[j] = UNKOWN
+        # if counts_uni.get(obs[j]) < REPLACE_WITH_UKNOWN:
+        #     obs[j] = UNKOWN
 
     	# Get tag from lexicon, else get UNKOWN token
         for tj in tag_dict.get(obs[j], tag_dict[UNKOWN]):   
@@ -64,10 +64,60 @@ def viterbi(test):
                     back[makekey(str(j),tj)] = ti
 
     # Evaluate 
-    eval(back, obs, gold)
+    # eval(back, obs, gold, V)
+    prev = '**'
+    result = ["\n"] * len(obs)
+    for i in xrange(len(obs)-1, 0, -1):
+        
+        # if len(obs[i]) > 0:
+
+            # if '.' in obs[i]:
+            #     result.append( "%s\t%s" % obs[i], tag )
+            # else:
+        # result.append( "%s\t%s" % (obs[i],tag) )
+        result[i] = "%s\t%s" % (obs[i],tag)
+
+        # if '.' in obs[i-1]:
+        #     result.append( "" )
+
+        tag = back[makekey(str(i), prev)]
+        prev = tag
+
+    # for r in reversed(result):
+    #     print r
+    for r in result:
+        print r
 
 
-def eval(back, obs, gold):
+
+    # prev = "**"
+    # for i in xrange(len(obs)-1, 0, -1):
+
+    #     print obs[i]
+    #     tag = back[makekey(str(i), prev)]
+    #     print "%s\t%s" % (obs[i], back[makekey(str(i), tag)])
+    #     prev = tag
+
+        # for k,v in back.iteritems():
+        #     if str(i) in k:
+        #         print "%s %s %s %s" % (obs[i], str(i), k, v)
+        
+        # if len(obs[i]) > 0:
+
+            # if '.' in obs[i]:
+            #     result.append( "%s\t%s" % obs[i], tag )
+            # else:
+        # result.append( "%s\t%s" % (obs[i],tag) )
+
+        # if '.' in obs[i-1]:
+        #     result.append( "" )
+
+        # tag = back[makekey(str(i), prev)]
+        # prev = tag
+
+
+
+def eval(back, obs, gold, v={}):
     result  = [START]
     predict = ['**']
     prev = predict[0]
@@ -91,8 +141,16 @@ def eval(back, obs, gold):
         prev = tag
 
     tpct = float(known + novel) / (ktotal + ntotal) * 100
+    kpct = float(known) / ktotal * 100
+    npct = float(novel) / ntotal * 100
+    path_prob = v[makekey(str(len(obs)-1), predict[-1])]
+    ppw = math.exp(float(-1*path_prob)/(len(obs)-1))
+    print """
+    Tagging accuracy: %.4g%% (known: %.4g%% novel: %.4g%%)
+    Perplexity per tagged test word: %.3f
+    """ % (tpct, kpct, npct, ppw)
 
-    print "Tagging accuracy: %.4g%%" % tpct
+    # print "Tagging accuracy: %.4g%%" % tpct
 
     return result
 
@@ -116,7 +174,18 @@ def load(filename):
     
     return words, tags
 
+def loadTest(filename): 
 
+    with open(filename, 'r') as inputFile:
+
+        words = [START]
+
+        for line in inputFile:
+            words.append(line.strip())
+
+        words.append('**')
+    
+    return words
 
 def train_models(filename):
     global num_of_tags, num_of_words
