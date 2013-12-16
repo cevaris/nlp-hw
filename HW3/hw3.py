@@ -66,58 +66,19 @@ def viterbi(test):
     # Evaluate 
     # eval(back, obs, gold, V)
     prev = '**'
-    # result = ["\n"] * len(obs)
     result = []
     for i in xrange(len(obs)-1, 0, -1):
         
-        # if len(obs[i]) > 0:
-
-            # if '.' in obs[i]:
-            #     result.append( "%s\t%s" % obs[i], tag )
-            # else:
-        result.append( "%s\t%s" % (obs[i],tag) )
-        # result[i] = "%s\t%s" % (obs[i],tag)
-
-        #if '.' in obs[i-1] and not obs[i-2].isdigit():
-        # print "%s %s %s" % (obs[i],obs[i-1],obs[i-2])
-        
-        # if '.' in obs[i-1] and not obs[i].isdigit():
-        #     result.append( "" )
-
+        if ["<n>","<n>"] == [obs[i],tag]:
+            result.append("")
+        else:
+            result.append( "%s\t%s" % (obs[i],tag) )
+    
         tag = back[makekey(str(i), prev)]
         prev = tag
 
     for r in reversed(result):
         print r
-    # for r in result:
-    #     print r
-
-
-
-    # prev = "**"
-    # for i in xrange(len(obs)-1, 0, -1):
-
-    #     print obs[i]
-    #     tag = back[makekey(str(i), prev)]
-    #     print "%s\t%s" % (obs[i], back[makekey(str(i), tag)])
-    #     prev = tag
-
-        # for k,v in back.iteritems():
-        #     if str(i) in k:
-        #         print "%s %s %s %s" % (obs[i], str(i), k, v)
-        
-        # if len(obs[i]) > 0:
-
-            # if '.' in obs[i]:
-            #     result.append( "%s\t%s" % obs[i], tag )
-            # else:
-        # result.append( "%s\t%s" % (obs[i],tag) )
-
-        # if '.' in obs[i-1]:
-        #     result.append( "" )
-
-        # tag = back[makekey(str(i), prev)]
-        # prev = tag
 
 
 
@@ -173,8 +134,8 @@ def load(filename):
 	            tags.append(tag)
 	            words.append(word)
             else:
-                tags.append("")
-                words.append("")
+                tags.append("<n>")
+                words.append("<n>")
 
 
         tags.append('**')

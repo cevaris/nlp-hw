@@ -39,6 +39,7 @@ def findEntities(data):
     count = 0
     
     for word, tag in data:
+        print word, tag
         count = count + 1
         if currentState == "Q0":
             if tag == 'B':
@@ -61,7 +62,6 @@ def findEntities(data):
 
 def taggedData(file):
     for line in file:
-        print line
         if line == '\n':
             yield(['</s>', 'O'])
         else:
