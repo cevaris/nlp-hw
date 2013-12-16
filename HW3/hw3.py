@@ -2,6 +2,7 @@
 
 # Reference https://github.com/chrismikehogan/Viterbi-Tagger
 
+from subprocess import call
 import sys
 import math
 
@@ -9,15 +10,26 @@ UNKOWN  = '<u>'
 START   = '<s>'
 EPSILON = 1e-100
 LAPLACE_SMOOTH = 1
-REPLACE_WITH_UKNOWN = 1
+REPLACE_WITH_UKNOWN = 0
 
 counts_uni = {} # Map of unigram counts
 counts_tt  = {} # Map of tt bigram counts
 counts_tw  = {} # Map of wt bigram counts
 tag_dict   = {} # Map of observed tags for given word
+sing_tt = {}    # Map of singletons, sing(.|ti-1)
+sing_tw = {}    # Map of singletons, sing(.|ti)
 
 num_of_tags  = 0
 num_of_words = 0
+
+"""
+8215  entities in gold standard.
+2975  total entities found.
+1066  of which were correct.
+Precision:   0.358319327731 
+Recall:      0.129762629337 
+F1-measure:  0.190527256479
+"""
 
 def viterbi(test):
 
@@ -36,14 +48,12 @@ def viterbi(test):
 
     for j in xrange(2, len(obs)):
 
-        # if counts_uni.get(obs[j]) < REPLACE_WITH_UKNOWN:
-        #     obs[j] = UNKOWN
+        if counts_uni.get(obs[j]) < REPLACE_WITH_UKNOWN:
+            obs[j] = UNKOWN
 
-    	# Get tag from lexicon, else get UNKOWN token
         for tj in tag_dict.get(obs[j], tag_dict[UNKOWN]):   
 
             vj = makekey(str(j), tj)
-            # Get tag from lexicon, else return UNKOWN token
             for ti in tag_dict.get(obs[j-1], tag_dict[UNKOWN]): 
                         
                 vi = makekey(str(j-1), ti)
@@ -65,6 +75,8 @@ def viterbi(test):
 
     # Evaluate 
     # eval(back, obs, gold, V)
+
+    (obs, gold) = load(test)  # Read in test file and tags
     prev = '**'
     result = []
     for i in xrange(len(obs)-1, 0, -1):
@@ -77,47 +89,15 @@ def viterbi(test):
         tag = back[makekey(str(i), prev)]
         prev = tag
 
+    # Remove first element 
+    result.pop(0)
+
+    output = open('result.txt', 'w')
     for r in reversed(result):
-        print r
+        output.write("%s\n" % r)
 
+    # print call(['./nerEval.py', 'test.txt', 'result.txt'])
 
-
-def eval(back, obs, gold, v={}):
-    result  = [START]
-    predict = ['**']
-    prev = predict[0]
-    known, novel, ktotal, ntotal = 0, 0, EPSILON, EPSILON
-
-    for i in xrange(len(obs)-1, 0, -1):
-        
-        if obs[i] != '**':
-            if obs[i] in counts_uni:
-                ktotal += 1
-                if predict[0] == gold[i]:
-                    known += 1
-            else:
-                ntotal += 1
-                if predict[0] == gold[i]:
-                    novel += 1
-
-        tag = back[makekey(str(i), prev)]
-        result.append("%s %s" % (obs[i],tag))
-        predict.insert(0, tag)
-        prev = tag
-
-    tpct = float(known + novel) / (ktotal + ntotal) * 100
-    kpct = float(known) / ktotal * 100
-    npct = float(novel) / ntotal * 100
-    path_prob = v[makekey(str(len(obs)-1), predict[-1])]
-    ppw = math.exp(float(-1*path_prob)/(len(obs)-1))
-    print """
-    Tagging accuracy: %.4g%% (known: %.4g%% novel: %.4g%%)
-    Perplexity per tagged test word: %.3f
-    """ % (tpct, kpct, npct, ppw)
-
-    # print "Tagging accuracy: %.4g%%" % tpct
-
-    return result
 
 
 def load(filename): 
@@ -162,6 +142,7 @@ def train_models(filename):
     (words, tags) = load(filename)
     num_of_tags = len(tags)
     tag_dict[UNKOWN] = []
+    counts_uni['_N_'] = len(tags) - 1
     
     for i in xrange(0, len(words)):
 
@@ -177,28 +158,52 @@ def train_models(filename):
             num_of_words += 1
             tag_dict[words[i]].append(tags[i])
 
+        # Increment tag/word count
+        counts_tw[tw] = counts_tw.get(tw, 0) + 1
+
         # Increment Unigram counts
         counts_uni[tags[i]] = counts_uni.get(tags[i], 0) + 1
         counts_uni[words[i]] = counts_uni.get(words[i], 0) + 1
 
-        # Increment tag/word count
-        counts_tw[tw] = counts_tw.get(tw, 0) + 1
-
         # Increment tag transitions count
         tt = makekey(tags[i-1], tags[i])
         counts_tt[tt] = counts_tt.get(tt, 0) + 1
+
+        # Adjust singleton count
+        if (counts_tt[tt] == 1):
+            sing_tt[tags[i-1]] = sing_tt.get(tags[i-1], 0) + 1
+        elif (counts_tt[tt] == 2):
+            sing_tt[tags[i-1]] -= 1
+
+        # Adjust singleton count
+        if (counts_tw[tw] == 1):
+            sing_tw[tags[i]] = sing_tw.get(tags[i], 0) + 1
+        elif (counts_tw[tw] == 2):
+            sing_tw[tags[i]] -= 1
+
+    counts_uni['_V_'] = len(tag_dict.keys())
 
 
 
 
 def tt_prob(i, j):
     # C(Tag Transition)/C(Tags)
-    return float(counts_tt.get(makekey(i, j), LAPLACE_SMOOTH))/(counts_uni[i])
+    tt = makekey(i, j)
+
+    backoff = float(counts_uni.get(j, 0) + 1)/(counts_uni['_N_']+counts_uni['_V_'])
+    lambdap = sing_tw[i] + 1e-100
+    return math.log(float(counts_tt.get(tt, 0) + lambdap*backoff)/(counts_uni[i] + lambdap))
+    # return float(counts_tt.get(makekey(i, j), LAPLACE_SMOOTH))/(counts_uni[i])
        
     
 def tw_prob(i, j):
     # C(Tag,Words)/C(Tags)
-    return float(counts_tw.get(makekey(i, j), 0))/(counts_uni[i])
+    tw = makekey(i, j)    
+
+    backoff = float(counts_uni.get(j,LAPLACE_SMOOTH))/counts_uni['_N_']
+    lambdap = sing_tt[i] + 1e-100
+    return math.log(float(counts_tw.get(tw, 0)+lambdap*backoff)/(counts_uni[i] + lambdap))
+    # return float(counts_tw.get(makekey(i, j), 0))/(counts_uni[i])
     
 
 def makekey(*words):
