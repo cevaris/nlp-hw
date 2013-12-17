@@ -192,8 +192,8 @@ def tt_prob(i, j):
 
     backoff = float(counts_uni.get(j, 0) + 1)/(counts_uni['_N_']+counts_uni['_V_'])
     lambdap = sing_tw[i] + 1e-100
-    return math.log(float(counts_tt.get(tt, 0) + lambdap*backoff)/(counts_uni[i] + lambdap))
-    # return float(counts_tt.get(makekey(i, j), LAPLACE_SMOOTH))/(counts_uni[i])
+    # return math.log(float(counts_tt.get(tt, 0) + lambdap*backoff)/(counts_uni[i] + lambdap))
+    return math.log(float(counts_tt.get(makekey(i, j), 1))/(counts_uni[i]))
        
     
 def tw_prob(i, j):
@@ -202,8 +202,8 @@ def tw_prob(i, j):
 
     backoff = float(counts_uni.get(j,LAPLACE_SMOOTH))/counts_uni['_N_']
     lambdap = sing_tt[i] + 1e-100
-    return math.log(float(counts_tw.get(tw, 0)+lambdap*backoff)/(counts_uni[i] + lambdap))
-    # return float(counts_tw.get(makekey(i, j), 0))/(counts_uni[i])
+    # return math.log(float(counts_tw.get(tw, 0)+lambdap*backoff)/(counts_uni[i] + lambdap))
+    return math.log(float(counts_tw.get(makekey(i, j), 1))/(counts_uni[i]))
     
 
 def makekey(*words):
