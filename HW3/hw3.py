@@ -9,11 +9,11 @@ from subprocess import call
 import sys
 import math
 
+NEWLINE = '<n>'
 UNKOWN  = '<u>'
 START   = '<s>'
 EPSILON = 1e-100
 LAPLACE_SMOOTH = 1
-REPLACE_WITH_UKNOWN = 0
 
 counts_uni = {} # Map of unigram counts
 counts_tt  = {} # Map of tt bigram counts
@@ -46,9 +46,6 @@ def viterbi(test):
 
     for j in xrange(2, len(obs)):
 
-        if counts_uni.get(obs[j]) < REPLACE_WITH_UKNOWN:
-            obs[j] = UNKOWN
-
         for tj in tag_dict.get(obs[j], tag_dict[UNKOWN]):   
 
             vj = makekey(str(j), tj)
@@ -71,12 +68,11 @@ def viterbi(test):
                     V[vj] = candidate
                     back[makekey(str(j),tj)] = ti
 
-    (obs, gold) = load(test)  # Read in test file and tags
     prev = '**'
     result = []
     for i in xrange(len(obs)-1, 0, -1):
         
-        if ["<n>","<n>"] == [obs[i],tag]:
+        if [NEWLINE,NEWLINE] == [obs[i],tag]:
             result.append("")
         else:
             result.append( "%s\t%s" % (obs[i],tag) )
@@ -95,19 +91,6 @@ def viterbi(test):
     print call(['./NEReval.py', 'test.txt', 'result.txt'])
 
 
-def loadTest(filename): 
-
-    with open(filename, 'r') as inputFile:
-
-        words = [START]
-
-        for line in inputFile:
-            words.append(line.strip())
-
-        words.append('**')
-    
-    return words
-
 def load(filename): 
 
     with open(filename, 'r') as inputFile:
@@ -117,13 +100,13 @@ def load(filename):
         for line in inputFile:
             items = line.split()
 
-            if not (items == []):
-               (word, tag) = tuple(items)
-               tags.append(tag)
-               words.append(word)
+            if items == []:
+                word, tag = NEWLINE,NEWLINE
             else:
-                tags.append("<n>")
-                words.append("<n>")
+                (word, tag) = tuple(items)
+            
+            tags.append(tag)
+            words.append(word)
  
         tags.append('**')
         words.append('**')
