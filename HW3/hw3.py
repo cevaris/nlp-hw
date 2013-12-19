@@ -8,6 +8,7 @@
 from subprocess import call
 import sys
 import math
+import random
 
 NEWLINE = '<n>'
 UNKOWN  = '<u>'
@@ -88,11 +89,58 @@ def viterbi(test):
         output.write("%s\n" % r)
     output.close()
 
-    print call(['./NEReval.py', 'test.txt', 'result.txt'])
+    print call(['./NEReval.py', test, 'result.txt'])
+
+
+def initData(source_file): 
+
+    # TRAIN = 'train-2.txt'
+    # TEST  = 'test-2.txt'
+    train_split = 0.8
+
+    sentences = []
+    with open(source_file, 'r') as inputFile:
+
+        tagged_pairs = []
+        for line in inputFile:
+
+            if line.split() == []:
+                sentences.append(tagged_pairs)
+                tagged_pairs = []
+            else:
+                tagged_pairs.append(line.strip())
+
+
+    for i in xrange(0,10):
+        train_file = open("train-%d.txt" % i, 'w+')
+        test_file  = open("test-%d.txt"  % i, 'w+')
+        count_train = 0
+        count_test  = 0
+        for isentence in xrange(0, len(sentences)):
+
+            if random.random() < train_split:
+                for pair in sentences[isentence]:
+                    train_file.write("%s\n" % pair)
+                train_file.write("\n")
+                count_train += 1
+
+            else:    
+                for pair in sentences[isentence]:
+                    test_file.write("%s\n" % pair)
+                test_file.write("\n")
+                count_test += 1
+
+        train_file.close()
+        test_file.close()
+    
+    print "Splitting on %f, Found %d sentences, Training on %d, Testing on %d" % (train_split, len(sentences), count_train, count_test)
+
+    # return TRAIN, TEST
 
 
 def load(filename): 
 
+    print "Loading :%s" % filename
     with open(filename, 'r') as inputFile:
 
         tags, words = [START], [START]
@@ -158,14 +206,28 @@ def tw_prob(i, j):
 def makekey(*words):
     return '/'.join(words)
 
+def reset():
+    counts_uni = {}
+    counts_tt  = {}
+    counts_tw  = {}
+    tag_dict   = {}
 
 def main():
 
-	train = 'train.txt'
-	test  = 'test.txt'
+	# train = 'train-0.txt'
+	# test  = 'test-0.txt'
 	
-	train_models(train) 
- 	viterbi(test)
+    initData('dataset.txt')
+
+    for i in xrange(0,10):
+        train_file = "train-%d.txt" % i
+        test_file  = "test-%d.txt"  % i
+    	train_models(train_file) 
+     	viterbi(test_file)
+        reset()
+
+    
+
     
 if __name__ == "__main__":
     main()
