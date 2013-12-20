@@ -13,7 +13,6 @@ import random
 NEWLINE = '<n>'
 UNKOWN  = '<u>'
 START   = '<s>'
-EPSILON = 1e-100
 LAPLACE_SMOOTH = 1
 
 counts_uni = {} # Map of unigram counts
@@ -181,11 +180,6 @@ def tw_prob(i, j):
 def makekey(*words):
     return '/'.join(words)
 
-def reset():
-    counts_uni = {}
-    counts_tt  = {}
-    counts_tw  = {}
-    tag_dict   = {}
 
 def main():
 
