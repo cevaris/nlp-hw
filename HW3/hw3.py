@@ -32,7 +32,8 @@ F1-measure:  0.414499501164
 
 def viterbi(test):
 
-    (obs, gold) = load(test)  # Read in test file and tags
+    # (obs, gold) = load(test)  # Read in test file and tags
+    obs = loadTest(test)
     
     V = {}      # dictionary to store viterbi values
     back = {}   # dictionary to store backpointers
@@ -89,7 +90,27 @@ def viterbi(test):
         output.write("%s\n" % r)
     output.close()
 
-    print call(['./NEReval.py', test, 'result.txt'])
+    # print call(['./NEReval.py', test, 'result.txt'])
+
+def loadTest(filename): 
+
+    with open(filename, 'r') as inputFile:
+
+        words = [START]
+
+        for line in inputFile:
+            items = line.split()
+
+            if items == []:
+                word = NEWLINE
+            else:
+                word = line.strip()
+            
+            words.append(word)
+
+        words.append('**')
+    
+    return words
 
 
 def load(filename): 
@@ -168,12 +189,10 @@ def reset():
 
 def main():
 
-
-	train = 'train.txt'
-	test  = 'test.txt'
-	
-	train_models(train) 
- 	viterbi(test)
+    train = 'dataset.txt'
+    test  = 'NER-test.txt'
+    train_models(train) 
+    viterbi(test)
 
 
     
