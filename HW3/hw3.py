@@ -92,52 +92,6 @@ def viterbi(test):
     print call(['./NEReval.py', test, 'result.txt'])
 
 
-def initData(source_file): 
-
-    # TRAIN = 'train-2.txt'
-    # TEST  = 'test-2.txt'
-    train_split = 0.8
-
-    sentences = []
-    with open(source_file, 'r') as inputFile:
-
-        tagged_pairs = []
-        for line in inputFile:
-
-            if line.split() == []:
-                sentences.append(tagged_pairs)
-                tagged_pairs = []
-            else:
-                tagged_pairs.append(line.strip())
-
-
-    for i in xrange(0,10):
-        train_file = open("train-%d.txt" % i, 'w+')
-        test_file  = open("test-%d.txt"  % i, 'w+')
-        count_train = 0
-        count_test  = 0
-        for isentence in xrange(0, len(sentences)):
-
-            if random.random() < train_split:
-                for pair in sentences[isentence]:
-                    train_file.write("%s\n" % pair)
-                train_file.write("\n")
-                count_train += 1
-
-            else:    
-                for pair in sentences[isentence]:
-                    test_file.write("%s\n" % pair)
-                test_file.write("\n")
-                count_test += 1
-
-        train_file.close()
-        test_file.close()
-    
-    print "Splitting on %f, Found %d sentences, Training on %d, Testing on %d" % (train_split, len(sentences), count_train, count_test)
-
-    # return TRAIN, TEST
-
-
 def load(filename): 
 
     print "Loading :%s" % filename
@@ -215,13 +169,12 @@ def reset():
 def main():
 
 
-	train = 'train-0.txt'
-	test  = 'test-0.txt'
+	train = 'train.txt'
+	test  = 'test.txt'
 	
 	train_models(train) 
  	viterbi(test)
 
-    
 
     
 if __name__ == "__main__":
