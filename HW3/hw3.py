@@ -214,17 +214,12 @@ def reset():
 
 def main():
 
-	# train = 'train-0.txt'
-	# test  = 'test-0.txt'
-	
-    initData('dataset.txt')
 
-    for i in xrange(0,10):
-        train_file = "train-%d.txt" % i
-        test_file  = "test-%d.txt"  % i
-    	train_models(train_file) 
-     	viterbi(test_file)
-        reset()
+	train = 'train-0.txt'
+	test  = 'test-0.txt'
+	
+	train_models(train) 
+ 	viterbi(test)
 
     
 
